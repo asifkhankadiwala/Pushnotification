@@ -15,8 +15,8 @@ class PushNotifications {
 		exit('Init function is not allowed');
 	}
 	
-        // Sends Push notification for Android users
-	public function android($data, $reg_id) {
+        // Sends Push notification for Android users (GCM)it is old use FCM
+	public function androidGSM($data, $reg_id) {
 	        $url = 'https://android.googleapis.com/gcm/send';
 	        $message = array(
 	            'title' => $data['mtitle'],
@@ -39,7 +39,37 @@ class PushNotifications {
 	
 	    	return $this->useCurl($url, $headers, json_encode($fields));
     	}
-	
+	  
+    //Push Notification android using FCM
+    public function android($registration_ids, $message) {
+        $url = 'https://fcm.googleapis.com/fcm/send';
+        $serverApiKey = "AIzaSyC2Nxqid3NaeP5FZNUYSuQMyr4vnBN9t_0";      //"Your Api key"
+
+        $headers = array(
+            'Content-Type:application/json',
+            'Authorization:key=' . $serverApiKey
+            );
+        $data = array(
+            'registration_ids' => $registration_ids,
+            'data' => $message
+            );
+        //echo json_encode($data);
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+
+        if ($headers)
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+        return $response;
+        // print_r($response); 
+    }
 	// Sends Push's toast notification for Windows Phone 8 users
 	public function WP($data, $uri) {
 		$delay = 2;
