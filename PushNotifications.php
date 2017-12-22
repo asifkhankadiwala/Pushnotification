@@ -176,5 +176,103 @@ class PushNotifications {
         }
     }
     
+//------------------------------------------------------------------------------------------------------------------------
+	 /**
+     *  Push Notification
+     */
+    public function sendPushNotification($registration_ids, $message) {
+        $url = 'https://fcm.googleapis.com/fcm/send';
+        $serverApiKey = "AIzaSyC2Nxqid3NaeP5FZNUsadasdasd_0";      //"Your Api key"
+
+        $headers = array(
+            'Content-Type:application/json',
+            'Authorization:key=' . $serverApiKey
+            );
+        $data = array(
+            'registration_ids' => $registration_ids,
+            'data' => $message
+            );
+        //echo json_encode($data);
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+
+        if ($headers)
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+
+        $response = curl_exec($ch);
+        curl_close($ch);
+        return $response;
+        // print_r($response); 
+    }
+    
+    
+    /**
+     *  ios notification
+     */
+    function sendPushNotificationios($deviceToken, $message = "",$data="") {
+              
+        $passphrase = '123';
+        $production = false;
+        $message = $message;
+        $ctx = stream_context_create();
+        stream_context_set_option($ctx, 'ssl', 'local_cert', 'youpem.pem');
+        stream_context_set_option($ctx, 'ssl', 'passphrase', $passphrase);
+
+        // Open a connection to the APNS server
+           if ($production) 
+            {
+                $gateway = 'gateway.push.apple.com:2195';
+            } 
+            else
+            { 
+                $gateway = 'gateway.sandbox.push.apple.com:2195';
+            }
+            $fp = stream_socket_client(
+            'ssl://'.$gateway, $err,
+            $errstr, 25, STREAM_CLIENT_CONNECT|STREAM_CLIENT_PERSISTENT, $ctx); 
+        
+        if (!$fp)
+        exit("Failed to connect: $err $errstr" . PHP_EOL);
+
+        // echo PHP_EOL;
+        // echo 'Connected to APNS' . PHP_EOL;
+
+        // Create the payload body
+        $body['aps'] = array(
+        'alert' => $message,
+        'sound' => 'default',
+        'data' => $data,
+        'mutable-content' =>1,
+         'category'=>'chat' 
+        );
+       
+        // Encode the payload as JSON
+        foreach($deviceToken as $device) 
+        {
+             $payload = json_encode($body);
+          
+            $msg = chr(0) . pack('n', 32) . pack('H*',$device) . pack('n', strlen($payload)) . $payload;
+            // Send it to the server
+            $result = fwrite($fp, $msg, strlen($msg));
+        }
+      // echo $result;
+        if (!$result)
+        {
+              // echo 'Message not delivered' . PHP_EOL;
+        }
+        else
+        {
+             // echo 'Message successfully delivered ... Good' . PHP_EOL;
+        }
+        // Close the connection to the server
+    fclose($fp);
+}
+	
+	
 }
 ?>
